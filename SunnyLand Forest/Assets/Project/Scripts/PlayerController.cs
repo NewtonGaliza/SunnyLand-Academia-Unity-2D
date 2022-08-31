@@ -1,4 +1,4 @@
-using System.Collections;
+ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,6 +16,11 @@ public class PlayerController : MonoBehaviour
 
     public bool facingRight = true;
 
+    public bool jump = false;
+    public int numberJumps = 0;
+    public int maximoJump = 2;
+    public float jumpForce;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -26,13 +31,25 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        isGround = Physics2D.Linecast(transform.position, groundCheck.position, 1 << LayerMask.NameToLayer("Ground"));
+        playerAnimator.SetBool("IsGrounded", isGround);
         touchRun = Input.GetAxisRaw("Horizontal");
         SetaMovimentos();
+
+        if(Input.GetButtonDown("Jump"))
+        {
+            jump = true;
+        }
     }
 
     void FixedUpdate()
     {
         MovePlayer(touchRun);
+
+        if(jump)
+        {
+            JumpPlayer();
+        }
     }
 
     void MovePlayer(float movimentoH)
@@ -41,7 +58,7 @@ public class PlayerController : MonoBehaviour
 
          if(movimentoH < 0 && facingRight)
          {
-            Flip();
+            Flip(); 
          }
 
          if(movimentoH > 0 && !facingRight)
@@ -61,7 +78,26 @@ public class PlayerController : MonoBehaviour
 
     void SetaMovimentos()
     {
-        playerAnimator.SetBool("Walk", playerRigidbody2d.velocity.x != 0);
+        playerAnimator.SetBool("Walk", playerRigidbody2d.velocity.x != 0 && isGround);
+        playerAnimator.SetBool("Jump", !isGround);
+    }
+
+      
+    void JumpPlayer()
+    {
+        if(isGround)
+        {
+            numberJumps = 0;
+        }
+
+        if(isGround || numberJumps < maximoJump)
+        {
+            playerRigidbody2d.AddForce(new Vector2(0f, jumpForce));
+            isGround = false;
+            numberJumps++;
+             
+        }
+        jump = false;
     }
 
 }
