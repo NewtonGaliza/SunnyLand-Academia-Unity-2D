@@ -21,11 +21,29 @@ public class PlayerController : MonoBehaviour
     public int maximoJump = 2;
     public float jumpForce;
 
+    private ControllerGame _ControleGame;
+
+    public AudioSource fxGame;
+    public AudioClip fxPulo;
+
+    private SpriteRenderer srPlayer;
+    public int Vidas = 3;
+    public Color hitColor;
+    public Color noHitColor;
+    private bool playerInvencivel;
+
+    public GameObject playerDie;
+
+
     // Start is called before the first frame update
     void Start()
     {
         playerAnimator = GetComponent<Animator>();
         playerRigidbody2d = GetComponent<Rigidbody2D>();
+
+        _ControleGame = FindObjectOfType(typeof(ControllerGame)) as ControllerGame;
+
+        srPlayer = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -95,9 +113,87 @@ public class PlayerController : MonoBehaviour
             playerRigidbody2d.AddForce(new Vector2(0f, jumpForce));
             isGround = false;
             numberJumps++;
+
+            fxGame.PlayOneShot(fxPulo);
              
         }
         jump = false;
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        switch(collision.gameObject.tag)
+        {
+            case "Coletaveis":
+                _ControleGame.Pontuacao(1);
+                Destroy(collision.gameObject);
+                break;
+
+            case "Inimigo":
+                GameObject tempExplosao = Instantiate(_ControleGame.hitPrefab, transform.position, transform.localRotation);
+                Destroy(tempExplosao, 0.5f);
+
+                Rigidbody2D rb = GetComponentInParent<Rigidbody2D>();
+                rb.velocity = new Vector2(rb.velocity.x, 0);
+                rb.AddForce(new Vector2(0, 400));
+                _ControleGame.fxGame.PlayOneShot(_ControleGame.fxExplosao);
+
+                Destroy(collision.gameObject);
+                break;
+        }    
+    }
+
+    void OnCollisionEnter2D(Collision2D  collision)
+    {
+        switch(collision.gameObject.tag)
+        {
+            case"Inimigo":
+                Hurt();
+                break;
+
+        }
+    }
+
+    void Hurt()
+    {
+        if(!playerInvencivel)
+        {
+            playerInvencivel = true;
+            Vidas--;
+            _ControleGame.BarraVida(Vidas);
+            StartCoroutine("Dano");
+
+            if(Vidas < 1)
+            {
+                //quaeternion.identity trava a rotacao do eixo Z
+                GameObject pDieTemp = Instantiate(playerDie, transform.position, Quaternion.identity);
+                Rigidbody2D rbDie = pDieTemp.GetComponent<Rigidbody2D>();
+                rbDie.AddForce(new Vector2(150f, 500f));
+
+                _ControleGame.fxGame.PlayOneShot(_ControleGame.fxDie);
+
+                //desabilitar o player na cena apos morrer
+                gameObject.SetActive(false);
+            }
+        }
+    }
+
+    IEnumerator Dano()
+    {
+        srPlayer.color = noHitColor;
+        yield return new WaitForSeconds(0.1f);
+
+        for(float i = 0;i < 1; i += 0.1f)
+        {
+            srPlayer.enabled = false;
+            yield return new WaitForSeconds(0.1f);
+            srPlayer.enabled = true;
+            yield return new WaitForSeconds(0.1f);
+
+        }
+
+        srPlayer.color = Color.white;
+        playerInvencivel = false;
     }
 
 }
