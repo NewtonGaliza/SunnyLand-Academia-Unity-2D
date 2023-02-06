@@ -1,6 +1,7 @@
  using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -33,6 +34,7 @@ public class PlayerController : MonoBehaviour
     private bool playerInvencivel;
 
     public GameObject playerDie;
+    [SerializeField] ParticleSystem _poeira;
 
 
     // Start is called before the first frame update
@@ -87,6 +89,7 @@ public class PlayerController : MonoBehaviour
 
     void Flip()
     {
+        CriarPoeira();
         facingRight = !facingRight;
         //Vector3 theScale = transform.localScale;
         //theScale.x *= -1;
@@ -106,6 +109,7 @@ public class PlayerController : MonoBehaviour
         if(isGround)
         {
             numberJumps = 0;
+            CriarPoeira();
         }
 
         if(isGround || numberJumps < maximoJump)
@@ -115,7 +119,7 @@ public class PlayerController : MonoBehaviour
             numberJumps++;
 
             fxGame.PlayOneShot(fxPulo);
-             
+            CriarPoeira();             
         }
         jump = false;
     }
@@ -140,6 +144,10 @@ public class PlayerController : MonoBehaviour
 
                 Destroy(collision.gameObject);
                 break;
+
+            case "Damage":
+                Hurt();
+                break;
         }    
     }
 
@@ -147,11 +155,27 @@ public class PlayerController : MonoBehaviour
     {
         switch(collision.gameObject.tag)
         {
+            case "Plataforma":
+                //transformando o player em filho da plataforma para ele permanecer em cima dela
+                this.transform.parent = collision.transform;
+                break;
+
             case"Inimigo":
                 Hurt();
                 break;
 
         }
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        switch(collision.gameObject.tag)
+        {
+            case "Plataforma":
+                this.transform.parent = null;
+                break;
+        }
+        
     }
 
     void Hurt()
@@ -172,10 +196,17 @@ public class PlayerController : MonoBehaviour
 
                 _ControleGame.fxGame.PlayOneShot(_ControleGame.fxDie);
 
+                Invoke("CarregaJogo", 4f);
+
                 //desabilitar o player na cena apos morrer
                 gameObject.SetActive(false);
             }
         }
+    }
+
+    void CarregaJogo()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     IEnumerator Dano()
@@ -184,7 +215,7 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
 
         for(float i = 0;i < 1; i += 0.1f)
-        {
+        { 
             srPlayer.enabled = false;
             yield return new WaitForSeconds(0.1f);
             srPlayer.enabled = true;
@@ -194,6 +225,11 @@ public class PlayerController : MonoBehaviour
 
         srPlayer.color = Color.white;
         playerInvencivel = false;
+    }
+
+    void CriarPoeira()
+    {
+        _poeira.Play();
     }
 
 }

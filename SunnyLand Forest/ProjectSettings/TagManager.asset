@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Coletaveis
   - Inimigo
+  - Plataforma
+  - Damage
   layers:
   - Default
   - TransparentFX
