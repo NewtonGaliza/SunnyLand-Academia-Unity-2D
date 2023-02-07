@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityStandardAssets.CrossPlatformInput;
 
 public class PlayerController : MonoBehaviour
 {
@@ -53,10 +54,20 @@ public class PlayerController : MonoBehaviour
     {
         isGround = Physics2D.Linecast(transform.position, groundCheck.position, 1 << LayerMask.NameToLayer("Ground"));
         playerAnimator.SetBool("IsGrounded", isGround);
-        touchRun = Input.GetAxisRaw("Horizontal");
+        
+        //touchRun = Input.GetAxisRaw("Horizontal");
+        /*
+        if(Input.GetButtonDown("Jump"))
+        {
+            jump = true;
+        }
+        */
+
+        touchRun = CrossPlatformInputManager.GetAxisRaw("Horizontal");
+        
         SetaMovimentos();
 
-        if(Input.GetButtonDown("Jump"))
+        if(CrossPlatformInputManager.GetButtonDown("Jump"))
         {
             jump = true;
         }
